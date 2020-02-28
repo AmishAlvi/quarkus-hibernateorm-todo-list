@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Quarkus Todo-List Appplication</title>
+    <link rel="stylesheet" href="https://unpkg.com/wingcss"/>
+    <style>
+        input[type=number] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            -webkit-transition: .5s;
+            transition: .5s;
+            outline: 0;
+            font-family: 'Open Sans', serif;
+        }
+    </style>
+    <!-- Load AngularJS -->
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script type="text/javascript">
+      var app = angular.module("TodoManagement", []);
+
+      //Controller Part
+      app.controller("TodoManagementController", function ($scope, $http) {
+
+        //Initialize page with default data which is blank in this example
+        $scope.todos = [];
+
+        $scope.form = {
+          id: -1,
+          name: "",
+          description: "",
+          priority : "" ,
+          done: ""
+        };
+
+        //Now load the data from server
+        _refreshPageData();
+
+        //HTTP POST/PUT methods for add/edit todos
+        $scope.update = function () {
+          var method = "";
+          var url = "";
+          var data = {};
+          if ($scope.form.id == -1) {
+            //Id is absent so add todos - POST operation
+            method = "POST";
+            url = '/todos';
+            data.name = $scope.form.name;
+            data.description = $scope.form.description;
+            data.priority = $scope.form.priority;
+            data.done = $scope.form.done;
+          } else {
+            //If Id is present, it's edit operation - PUT operation
+            method = "PUT";
+            url = '/todos/' + $scope.form.id;
+            data.name = $scope.form.name;
+            data.description = $scope.form.description;
+            data.priority = $scope.form.priority;
+            data.done = $scope.form.done;
+          }
+
+          $http({
+            method: method,
+            url: url,
+            data: angular.toJson(data),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(_success, _error);
+        };
+
+        //HTTP DELETE- delete todo by id
+        $scope.remove = function (todo) {
+          $http({
+            method: 'DELETE',
+            url: '/todos/' + todo.id
+          }).then(_success, _error);
+        };
+
+        //In case of edit todos, populate form with todo data
+        $scope.edit = function (todo) {
+          $scope.form.name = todo.name;
+          $scope.form.description = todo.description;
+          $scope.form.priority = todo.priority;
+          $scope.form.done = todo.done;
+          $scope.form.id = todo.id;
+        };
+
+          /* Private Methods */
+        //HTTP GET- get all todos collection
+        function _refreshPageData() {
+          $http({
+            method: 'GET',
+            url: '/todos'
+          }).then(function successCallback(response) {
+            $scope.todos = response.data;
+          }, function errorCallback(response) {
+            console.log(response.statusText);
+          });
+        }
+
+        function _success(response) {
+          _refreshPageData();
+          _clearForm()
+        }
+
+        function _error(response) {
+          alert(response.data.message || response.statusText);
+        }
+
+        //Clear the form
+        function _clearForm() {
+          $scope.form.name = "";
+          $scope.form.description = "";
+          $scope.form.priority = "";
+          $scope.form.done = false;
+          $scope.form.id = -1;
+        }
+      });
+    </script>
+</head>
+<body ng-app="TodoManagement" ng-controller="TodoManagementController">
+
+<div class="container">
+   <!-- <h1>Hibernate ORM with Panache quickstart - Quarkus</h1>
+    <p>This application demonstrates how a Quarkus application implements a CRUD endpoint to manage todos using Hibernate ORM with Panache.
+        This management interface invokes the CRUD service endpoint, which interacts with a database using JPA and several other well known libraries.
+    </p>
+    <p>Behind the scenes, we have:
+        <ul>
+            <li>Hibernate ORM with Panache taking care of all CRUD operations</li>
+            <li>RESTEasy powering the REST API</li>
+            <li>ArC, a CDI based dependency injection framework</li>
+            <li>the Narayana Transaction Manager coordinating all transactions</li>
+            <li>Agroal, the high performance Datasource implementation</li>
+            <li>Infinispan used as Hibernate 2nd level caching: enabled on both entities and queries</li>
+            <li>The Undertow webserver</li>
+            <li>Some magic bytecode generation plugged in the compiler...</li>
+        </ul>
+    </p>-->
+
+    <h1>Quarkus Todo-List</h1>
+
+    <h3>Add/Edit a todo</h3>
+    <form ng-submit="update()">
+        <div>
+            <div class="row"> Name: <input type="text" placeholder="Name" ng-model="form.name" size="60"/></div>
+            <div class="row"> Description: <input type="text" placeholder="Description" ng-model="form.description" size="60"/></div>
+            <div class="row"> Priority:<select ng-model="form.priority">
+              <option value="High">High</option>
+              <option selected value="Mid">Mid</option>
+              <option value="Low">Low</option>
+            </select></div>
+            <div class="row">Status: </div>
+            <div class="row"><input type="checkbox" placeholder="Done" ng-model="form.done" size="60"/></div>
+        </div>
+        <input type="submit" value="Add / Edit"/>
+    </form>
+
+    <h3>Todo List</h3>
+    <div class="row">
+        <div class="col">Name</div>
+        <div class="col">Description</div>
+        <div class="col">Priority</div>
+        <div class="col">Completed</div>
+        <div class="col"></div>
+        <div class="col"></div>
+    </div>
+    <div class="row" ng-repeat="todo in todos">
+        <div class="col">{{ todo.name }}</div>
+        <div class="col" >{{ todo.description }}</div>
+        <div class="col" >{{ todo.priority }}</div>
+        <div class="col" >{{ todo.done }}</div>
+        <div class="col"><a ng-click="edit( todo )" class="btn"> <button>Edit</button> </a></div>
+        <div class="col"><a ng-click="remove( todo )" class="btn"> <button>Remove</button></a></div>
+    </div>
+    <div class="row" ng-repeat="todo in todos">
+     
+    </div>
+</div>
+
+</body>
+</html>
