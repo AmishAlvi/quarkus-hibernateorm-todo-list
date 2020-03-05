@@ -73,6 +73,12 @@ Then run it:
 
     Have a look at how fast it boots.
     Or measure total native memory consumption...
+ 
+ To switch https ports start with: quarkus.http.port configuration:
+ 
+ 
+> java -Dquarkus.http.port=<your_port> -jar ./target/hibernate-orm-panache-quickstart-1.0-SNAPSHOT-runner.jar
+ 
 
 ### Run Quarkus as a native application
 
